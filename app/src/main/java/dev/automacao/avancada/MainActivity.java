@@ -1,19 +1,33 @@
 package dev.automacao.avancada;
 
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.content.res.AppCompatResources;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
+
 import android.Manifest;
 import android.content.pm.PackageManager;
 import android.location.Location;
 import android.os.Bundle;
+import android.os.Looper;
+
 import com.google.android.gms.location.FusedLocationProviderClient;
+import com.google.android.gms.location.Granularity;
+import com.google.android.gms.location.LastLocationRequest;
+import com.google.android.gms.location.LocationCallback;
+import com.google.android.gms.location.LocationRequest;
+import com.google.android.gms.location.LocationResult;
 import com.google.android.gms.location.LocationServices;
+import com.google.android.gms.location.Priority;
+
 import org.osmdroid.api.IMapController;
 import org.osmdroid.tileprovider.tilesource.XYTileSource;
 import org.osmdroid.util.GeoPoint;
 import org.osmdroid.views.overlay.Marker;
+
 import java.util.ArrayList;
+
 import dev.automacao.avancada.databinding.ActivityMainBinding;
 
 public class MainActivity extends AppCompatActivity {
@@ -21,26 +35,47 @@ public class MainActivity extends AppCompatActivity {
     private LocationService locationService;
     private Location lastLocation = null;
     private ActivityMainBinding binding;
+    LocationRequest locationRequest;
+    FusedLocationProviderClient fusedLocationClient;
+    private LocationCallback locationCallback;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        FusedLocationProviderClient fusedLocationClient = LocationServices.getFusedLocationProviderClient(this);
+        fusedLocationClient = LocationServices.getFusedLocationProviderClient(this);
         locationService = new LocationService(fusedLocationClient);
         binding = ActivityMainBinding.inflate(getLayoutInflater());
         setContentView(binding.getRoot());
         binding.mapView.setTileSource(new XYTileSource("OSM", 0, 17, 512, ".png",
-                new String[] { "https://tile.openstreetmap.de/" }) {
+                new String[]{"https://tile.openstreetmap.de/"}) {
 
         });
+        locationCallback = new LocationCallback() {
+            @Override
+            public void onLocationResult(@NonNull LocationResult locationResult) {
+                if (locationResult != null) {
+                    binding.latitude.setText(String.format("LAT: %s", locationResult.getLastLocation()));
+                    binding.longitude.setText(String.format("LONG: %s", locationResult.getLastLocation()));
+                    lastLocation = locationResult.getLastLocation();
+                }
+            }
+        };
 
-        requestPermissionsIfNecessary(new String[] {
+        createLocationRequest();
+        requestPermissionsIfNecessary(new String[]{
                 android.Manifest.permission.ACCESS_FINE_LOCATION,
                 android.Manifest.permission.ACCESS_COARSE_LOCATION,
                 Manifest.permission.INTERNET,
                 android.Manifest.permission.WRITE_EXTERNAL_STORAGE
         });
         setListeners();
+    }
+
+    protected void createLocationRequest() {
+        locationRequest = new LocationRequest.Builder(15000)
+                .setIntervalMillis(10000)
+                .setPriority(Priority.PRIORITY_HIGH_ACCURACY)
+                .build();
     }
 
     @Override
@@ -53,12 +88,26 @@ public class MainActivity extends AppCompatActivity {
         IMapController mapController = binding.mapView.getController();
         mapController.setZoom(12.0);
 
+        startLocationUpdates();
+    }
+
+    private void startLocationUpdates() {
+        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED || ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
+            fusedLocationClient.requestLocationUpdates(locationRequest,
+                    locationCallback,
+                    Looper.getMainLooper());
+        }
     }
 
     @Override
     public void onPause() {
         super.onPause();
         binding.mapView.onPause();
+        stopLocationUpdates();
+    }
+
+    private void stopLocationUpdates() {
+        fusedLocationClient.removeLocationUpdates(locationCallback);
     }
 
     private void setListeners() {
@@ -90,11 +139,14 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void setMarker(Location location) {
-        GeoPoint startPoint = new GeoPoint(location.getLatitude(), location.getLongitude());
-        Marker startMarker = new Marker(binding.mapView);
-        startMarker.setPosition(startPoint);
-        startMarker.setAnchor(Marker.ANCHOR_CENTER, Marker.ANCHOR_BOTTOM);
-        binding.mapView.getOverlays().add(startMarker);
+        if (location != null) {
+            GeoPoint startPoint = new GeoPoint(location.getLatitude(), location.getLongitude());
+            Marker startMarker = new Marker(binding.mapView);
+            startMarker.setIcon(AppCompatResources.getDrawable(this, R.drawable.icon_navigation));
+            startMarker.setPosition(startPoint);
+            startMarker.setAnchor(Marker.ANCHOR_CENTER, Marker.ANCHOR_BOTTOM);
+            binding.mapView.getOverlays().add(startMarker);
+        }
     }
 
     private void getLocation() {
