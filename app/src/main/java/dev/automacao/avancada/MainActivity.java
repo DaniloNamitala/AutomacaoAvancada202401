@@ -54,9 +54,12 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onLocationResult(@NonNull LocationResult locationResult) {
                 if (locationResult != null) {
-                    binding.latitude.setText(String.format("LAT: %s", locationResult.getLastLocation()));
-                    binding.longitude.setText(String.format("LONG: %s", locationResult.getLastLocation()));
+                    binding.latitude.setText(String.format("LAT: %s", locationResult.getLastLocation().getLatitude()));
+                    binding.longitude.setText(String.format("LONG: %s", locationResult.getLastLocation().getLongitude()));
                     lastLocation = locationResult.getLastLocation();
+                    setMarker(lastLocation);
+                    goToPoint(lastLocation);
+                    setZoom(15.0);
                 }
             }
         };
@@ -72,8 +75,8 @@ public class MainActivity extends AppCompatActivity {
     }
 
     protected void createLocationRequest() {
-        locationRequest = new LocationRequest.Builder(15000)
-                .setIntervalMillis(10000)
+        locationRequest = new LocationRequest.Builder(500)
+                .setIntervalMillis(500)
                 .setPriority(Priority.PRIORITY_HIGH_ACCURACY)
                 .build();
     }
@@ -140,12 +143,17 @@ public class MainActivity extends AppCompatActivity {
 
     private void setMarker(Location location) {
         if (location != null) {
+            Marker startMarker;
+            if (binding.mapView.getOverlays().isEmpty()) {
+                startMarker = new Marker(binding.mapView);
+                startMarker.setIcon(AppCompatResources.getDrawable(this, R.drawable.icon_navigation));
+                startMarker.setAnchor(Marker.ANCHOR_CENTER, Marker.ANCHOR_BOTTOM);
+                binding.mapView.getOverlays().add(startMarker);
+            } else {
+                startMarker = (Marker) binding.mapView.getOverlays().get(0);
+            }
             GeoPoint startPoint = new GeoPoint(location.getLatitude(), location.getLongitude());
-            Marker startMarker = new Marker(binding.mapView);
-            startMarker.setIcon(AppCompatResources.getDrawable(this, R.drawable.icon_navigation));
             startMarker.setPosition(startPoint);
-            startMarker.setAnchor(Marker.ANCHOR_CENTER, Marker.ANCHOR_BOTTOM);
-            binding.mapView.getOverlays().add(startMarker);
         }
     }
 
