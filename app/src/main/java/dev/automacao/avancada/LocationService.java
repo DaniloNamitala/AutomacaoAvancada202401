@@ -59,7 +59,7 @@ public class LocationService {
             Task<QuerySnapshot> task = db.collection("REGIONS").get();
             canAdd.set(true);
             try {
-                while (!task.isComplete());
+                while (!(task.isComplete() || task.isCanceled()));
                 if (task.isSuccessful()) {
                     if (!task.getResult().isEmpty()) {
                         for (QueryDocumentSnapshot document : task.getResult()) {
