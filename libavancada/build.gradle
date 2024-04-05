@@ -1,27 +1,16 @@
 plugins {
-    id 'com.android.application'
-    id 'com.google.android.libraries.mapsplatform.secrets-gradle-plugin'
-    id 'com.google.gms.google-services'
+    id 'com.android.library'
 }
 
 android {
-    apply plugin: 'com.android.application'
-
-    namespace 'dev.automacao.avancada'
+    namespace 'dev.automacao.libavancada'
     compileSdk 34
 
     defaultConfig {
-        applicationId "dev.automacao.avancada"
         minSdk 24
-        targetSdk 34
-        versionCode 1
-        versionName "1.0"
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
-    }
-
-    buildFeatures {
-        viewBinding true
+        consumerProguardFiles "consumer-rules.pro"
     }
 
     buildTypes {
@@ -40,13 +29,7 @@ dependencies {
 
     implementation 'androidx.appcompat:appcompat:1.6.1'
     implementation 'com.google.android.material:material:1.11.0'
-    implementation 'androidx.constraintlayout:constraintlayout:2.1.4'
-    implementation project(':libavancada')
     testImplementation 'junit:junit:4.13.2'
     androidTestImplementation 'androidx.test.ext:junit:1.1.5'
     androidTestImplementation 'androidx.test.espresso:espresso-core:3.5.1'
-    implementation 'com.google.android.gms:play-services-location:21.2.0'
-    implementation 'org.osmdroid:osmdroid-android:6.1.18'
-    implementation(platform("com.google.firebase:firebase-bom:32.7.4"))
-    implementation("com.google.firebase:firebase-firestore")
 }

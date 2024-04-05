@@ -11,6 +11,7 @@ import android.content.pm.PackageManager;
 import android.location.Location;
 import android.os.Bundle;
 import android.os.Looper;
+import android.widget.Toast;
 
 import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.location.Granularity;
@@ -43,7 +44,7 @@ public class MainActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         fusedLocationClient = LocationServices.getFusedLocationProviderClient(this);
-        locationService = new LocationService(fusedLocationClient);
+        locationService = new LocationService(fusedLocationClient, ((AvancadaApp) getApplicationContext()).getDatabase());
         binding = ActivityMainBinding.inflate(getLayoutInflater());
         setContentView(binding.getRoot());
         binding.mapView.setTileSource(new XYTileSource("OSM", 0, 17, 512, ".png",
@@ -53,14 +54,11 @@ public class MainActivity extends AppCompatActivity {
         locationCallback = new LocationCallback() {
             @Override
             public void onLocationResult(@NonNull LocationResult locationResult) {
-                if (locationResult != null) {
-                    binding.latitude.setText(String.format("LAT: %s", locationResult.getLastLocation().getLatitude()));
-                    binding.longitude.setText(String.format("LONG: %s", locationResult.getLastLocation().getLongitude()));
-                    lastLocation = locationResult.getLastLocation();
-                    setMarker(lastLocation);
-                    goToPoint(lastLocation);
-                    setZoom(15.0);
-                }
+                binding.latitude.setText(String.format("LAT: %s", locationResult.getLastLocation().getLatitude()));
+                binding.longitude.setText(String.format("LONG: %s", locationResult.getLastLocation().getLongitude()));
+                lastLocation = locationResult.getLastLocation();
+                setMarker(lastLocation);
+                goToPoint(lastLocation);
             }
         };
 
@@ -114,17 +112,14 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void setListeners() {
-        binding.btnLocal.setOnClickListener(v -> {
-            getLocation();
-            goToPoint(lastLocation);
-            setMarker(lastLocation);
-            setZoom(19.0);
-        });
-
         binding.btnEnqueue.setOnClickListener(v -> {
             if (lastLocation != null) {
                 locationService.enqueue(lastLocation);
             }
+        });
+
+        binding.btnDatabase.setOnClickListener(v -> {
+            locationService.saveToDatabase();
         });
     }
 

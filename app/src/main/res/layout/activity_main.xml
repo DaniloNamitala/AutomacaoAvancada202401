@@ -19,7 +19,7 @@
         android:id="@+id/latitude"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_gravity="start"
+        android:layout_gravity="center"
         android:layout_marginStart="12dp"
         android:textColor="@color/white"
         android:textSize="19sp"
@@ -29,7 +29,7 @@
         android:id="@+id/longitude"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_gravity="start"
+        android:layout_gravity="center"
         android:layout_marginStart="12dp"
         android:textColor="@color/white"
         android:textSize="19sp"
@@ -42,19 +42,19 @@
         android:orientation="horizontal">
 
         <Button
-            android:id="@+id/btn_local"
-            android:layout_width="120dp"
-            android:layout_height="60dp"
-            android:background="#c1c1c1"
-            android:layout_marginEnd="12dp"
-            android:text="Pegar Local"/>
-
-        <Button
             android:id="@+id/btn_enqueue"
             android:layout_width="120dp"
             android:layout_height="60dp"
             android:background="#c1c1c1"
+            android:layout_marginEnd="10dp"
             android:text="Enfileirar"/>
+
+        <Button
+            android:id="@+id/btn_database"
+            android:layout_width="120dp"
+            android:layout_height="60dp"
+            android:background="#c1c1c1"
+            android:text="Slvar no Banco"/>
     </LinearLayout>
 
 </LinearLayout>

@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "702374358308",
+    "project_id": "avancada-c5a69",
+    "storage_bucket": "avancada-c5a69.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:702374358308:android:248c6b1ed53c00be6c97b1",
+        "android_client_info": {
+          "package_name": "dev.automacao.avancada"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyD-IgmCBa_-901NupxRoaksRpUEZancNFE"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
