@@ -158,6 +158,7 @@ public class LocationService {
                 if ((r instanceof SubRegion) || (r instanceof RestrictedRegion)) { // é SubRegion ou RestrictedRegion
                     if (!r.canEnqueue(r1)) { // verifica se pode adicionar
                         canAdd.set(false);
+                        break;
                     }
                 } else { // é Region
                     if (!r.canEnqueue(r1)) // esta no raio de 30m
