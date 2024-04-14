@@ -48,6 +48,10 @@ public class Region {
         return longitude;
     }
 
+    public Boolean canEnqueue(Region r1) {
+        return LocationMath.distance(r1, this) >= 30;
+    }
+
     public Map<String, Object> toMap() {
         HashMap<String, Object> map = new HashMap<>();
         map.put("name", name);

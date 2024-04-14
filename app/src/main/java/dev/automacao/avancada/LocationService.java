@@ -26,18 +26,21 @@ import java.util.NoSuchElementException;
 import java.util.Objects;
 import java.util.Queue;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.locks.ReentrantLock;
 
 import dev.automacao.libavancada.LocationMath;
 import dev.automacao.libavancada.Region;
+import dev.automacao.libavancada.RestrictedRegion;
+import dev.automacao.libavancada.SubRegion;
 
 public class LocationService {
     ReentrantLock lock = new ReentrantLock();
     private final Queue<Region> queue = new LinkedList<>();
     private final FusedLocationProviderClient locationClient;
     private Integer regionCount = 0;
-
     private final FirebaseFirestore db;
+    private Boolean createSubRegion = false;
 
     public LocationService(FusedLocationProviderClient locationClient, FirebaseFirestore db) {
         this.db = db;
@@ -65,7 +68,7 @@ public class LocationService {
                         for (QueryDocumentSnapshot document : task.getResult()) {
                             Log.d("AVANCADA", document.getId() + " => " + document.getData());
                             Region region = new Region(document.getData());
-                            if (!LocationMath.canEnqueue(region, r1)) {
+                            if (!region.canEnqueue(r1)) {
                                 canAdd.set(false);
                                 break;
                             }
@@ -94,7 +97,6 @@ public class LocationService {
 
             }
         }).start();
-
     }
 
     private void readCount() {
@@ -107,9 +109,10 @@ public class LocationService {
     public void enqueue(Location location){
         Region region = new Region("Region"+regionCount, location);
         AtomicBoolean canAddQueue = new AtomicBoolean(true);
+        AtomicReference<Region> mainRegion = new AtomicReference<>(null);
         AtomicBoolean canAddDatabase = new AtomicBoolean(true);
 
-        Thread threadQueue = canEnqueue(region, canAddQueue);
+        Thread threadQueue = canEnqueue(region, canAddQueue, mainRegion);
         Thread threadDatabase = canAddDatabase(region, canAddDatabase);
 
         new Thread(() -> {
@@ -120,8 +123,20 @@ public class LocationService {
                 threadQueue.join();
 
                 if (canAddQueue.get() && canAddDatabase.get()) {
+                    Region newRegion = new Region("Region"+regionCount, location);
+                    if (mainRegion.get() != null) {
+                        if (createSubRegion) {
+                            newRegion = new RestrictedRegion("Region" + regionCount, location, mainRegion.get());
+                            Log.d("AVANCADA", "CRIADO UMA RESTRICTED REGION");
+                        } else {
+                            newRegion = new SubRegion("Region" + regionCount, location, mainRegion.get());
+                            Log.d("AVANCADA", "CRIADO UMA SUB REGION");
+                        }
+                        createSubRegion = !createSubRegion;
+                    }
+
                     if (lock.tryLock()) {
-                        queue.add(region);
+                        queue.add(newRegion);
                         lock.unlock();
                         regionCount++;
                         Log.d("AVANCADA", "ADICIONADO NA FILA");
@@ -135,14 +150,20 @@ public class LocationService {
         }).start();
     }
 
-    private Thread canEnqueue(Region r1, AtomicBoolean canAdd) {
+    private Thread canEnqueue(Region r1, AtomicBoolean canAdd, AtomicReference<Region> mainRegion) {
         return new Thread(() -> {
             canAdd.set(true);
             LinkedList<Region> list = (LinkedList<Region>) queue;
             for (Region r : list) {
-                if (!LocationMath.canEnqueue(r1, r)) {
-                    canAdd.set(false);
+                if ((r instanceof SubRegion) || (r instanceof RestrictedRegion)) { // é SubRegion ou RestrictedRegion
+                    if (!r.canEnqueue(r1)) { // verifica se pode adicionar
+                        canAdd.set(false);
+                    }
+                } else { // é Region
+                    if (!r.canEnqueue(r1)) // esta no raio de 30m
+                        mainRegion.set(r);
                 }
+
             }
         });
     }
